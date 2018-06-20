@@ -4,6 +4,7 @@ function Menu(obj){
 	this.menu.id = obj.id;
 	this.menu.className = obj.class;
 	document.body.appendChild(this.menu);
+	this.array = [];
 };
 
 function MenuItem(obj){
@@ -16,56 +17,60 @@ function MenuItem(obj){
 
 MenuItem.prototype.add = function(){
 	for(var i = 0; i < arguments.length; i++){
+		if(arguments[i] instanceof Button){
+			this.elem = document.createElement('button');
+		} else if(arguments[i] instanceof Select){
+			this.elem = document.createElement('select');
+		} else if(arguments[i] instanceof Input){
+			this.elem = document.createElement('input');
+		};
+		console.log(this.elem);
 		var menu = document.getElementById(this.obj.id);
 		this.elem.innerHTML = arguments[i].label;
 		this.elem.className = arguments[i].class;
 		this.elem.setAttribute("name", arguments[i].name);
 		menu.appendChild(this.elem);
 		arguments[i].elem = this.elem;
+		this.array.push(arguments[i]);
 	}
 };
 
 MenuItem.prototype.show = function(element){
-	var menu = document.getElementById(this.obj.id);
-	var childs = menu.childNodes;
 	this.element = element;
-	console.log(this.element);
-	console.log("_________");
-	for(var j = 0; j < childs.length; j++){
-		if (this.element.elem == childs[j]) {
-			console.log(childs[j] + this.element.elem);
-			childs[j].hidden = true;
+	for(var j = 0; j < this.array.length; j++){
+		if (this.element.elem == this.array[j].elem) {
+			this.array[j].elem.hidden = true;
 		};
 	};
 };
 
 MenuItem.prototype.delete = function(element){
-	var menu = document.getElementById(this.obj.id);
-	var childs = menu.childNodes;
 	this.element = element;
-	console.log(this.element);
-	console.log("_________");
-	for(var j = 0; j < childs.length; j++){
-		if (this.element.elem == childs[j]) {
-			console.log(childs[j] + this.element.elem);
-			childs[j].remove();
+	for(var j = 0; j < this.array.length; j++){
+		if (this.element.elem == this.array[j].elem) {
+			this.array[j].elem.remove();
+			this.array.splice(j, 1);
 		};
 	};
 };
 
+MenuItem.prototype.move = function(element, number){
+	this.element = element;
+	this.number = number;
+	for(var i = 0; i < this.array.length; i++){
+		if(this.number == i){
+			console.log(this.array[i].elem);
+			this.array[i].elem.before(this.element.elem);
+		}
+	}
+};
+
 function Button(obj){
 	MenuItem.apply(this, arguments);
-
 };
 
 Button.prototype = Object.create(MenuItem.prototype);
 Button.prototype.constructor = Button;
-
-Button.prototype.add = function(){
-	this.elem = document.createElement("button");
-	var self = this;
-	MenuItem.prototype.add.apply(this, arguments);
-};
 
 function Select(obj){
 	MenuItem.apply(this, arguments);
@@ -74,22 +79,12 @@ function Select(obj){
 Select.prototype = Object.create(MenuItem.prototype);
 Select.prototype.constructor = Select;
 
-Select.prototype.add = function(){
-	this.elem = document.createElement("select");
-	MenuItem.prototype.add.apply(this, arguments);
-}
-
 function Input(obj){
 	MenuItem.apply(this, arguments);
 };
 
 Input.prototype = Object.create(MenuItem.prototype);
 Input.prototype.constructor = Input;
-
-Input.prototype.add = function(){
-	this.elem = document.createElement("input");
-	MenuItem.prototype.add.apply(this, arguments);
-}
 
 var select2 = new Select({
 	label: "Click me1",
@@ -99,14 +94,14 @@ var select2 = new Select({
 });
 
 var button3 = new Button({
-	label: "Click me 2",
+	label: "Click me 3",
     name: "button3",
     class: "button",
     num: 0
 });
 
 var button2 = new Button({
-	label: "Click me 3",
+	label: "Click me 2",
     name: "button2",
     class: "button",
     num: 0
@@ -136,63 +131,30 @@ var input6 = new Input({
 var button4 = new Button({
 	class: "button",
 	name: "button4",
-	label: "Click me 4"
+	label: "Click me 4",
+	num: 0
 });
 
 Menu.prototype.add = function(){
 	for(var i = 0; i < arguments.length; i++){
-		if(arguments[i] instanceof Button){
-			Button.prototype.add.call(this, arguments[i]);
-		}
-		else if(arguments[i] instanceof Select){
-			Select.prototype.add.call(this, arguments[i]);
-		}
-		else if(arguments[i] instanceof Input){
-			Input.prototype.add.call(this, arguments[i]);
-		};
+		arguments[i].add.call(this, arguments[i]);
 	};
 };
 
 Menu.prototype.show = function(){
 	for(var i = 0; i < arguments.length; i++){
-		if(arguments[i] instanceof Button){
-			Button.prototype.show.call(this, arguments[i]);
-		}
-		else if(arguments[i] instanceof Select){
-			Select.prototype.show.call(this, arguments[i]);
-		}
-		else if(arguments[i] instanceof Input){
-			Input.prototype.show.call(this, arguments[i]);
-		};
+		arguments[i].show.call(this, arguments[i]);
 	};
 };
 
 Menu.prototype.delete = function(){
 	for(var i = 0; i < arguments.length; i++){
-		if(arguments[i] instanceof Button){
-			Button.prototype.delete.call(this, arguments[i]);
-		}
-		else if(arguments[i] instanceof Select){
-			Select.prototype.delete.call(this, arguments[i]);
-		}
-		else if(arguments[i] instanceof Input){
-			Input.prototype.delete.call(this, arguments[i]);
-		};
+		arguments[i].delete.call(this, arguments[i]);
 	};
 };
 
 Menu.prototype.move = function(){
-	for(var i = 0; i < arguments.length; i++){
-		if(arguments[i] instanceof Button){
-			Button.prototype.move.call(this, arguments[i]);
-		}
-		else if(arguments[i] instanceof Select){
-			Select.prototype.move.call(this, arguments[i]);
-		}
-		else if(arguments[i] instanceof Input){
-			Input.prototype.move.call(this, arguments[i]);
-		};
-	};
+	arguments.move.call(this, arguments);
 };
 
 var menu = new Menu({
@@ -200,6 +162,15 @@ var menu = new Menu({
 	id: 1
 });
 
+var menu2 = new Menu({
+	class: "menu",
+	id: 2
+});
+
 menu.add(button4, button3, button2, input4, input5, input6, select2);
-menu.show(button4);
-menu.delete(input5);
+menu.show(button2);
+menu.delete(button4);
+
+menu2.add(select2, input6, input5, input4, button2, button3, button4);
+menu.show(input6);
+menu.delete(select2);
