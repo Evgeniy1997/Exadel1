@@ -7,6 +7,14 @@ function Menu(obj){
 	this.array = [];
 };
 
+Menu.prototype.render = function(){
+	var menu = document.getElementById(this.obj.id);
+	menu.innerHTML = "";
+	for(var i = 0; i < this.array.length; i++){
+		menu.appendChild(this.array[i].elem);
+	};
+};
+
 function MenuItem(obj){
 	this.obj = obj;
 	this.name = obj.name;
@@ -24,32 +32,32 @@ MenuItem.prototype.add = function(){
 		} else if(arguments[i] instanceof Input){
 			this.elem = document.createElement('input');
 		};
-		console.log(this.elem);
-		var menu = document.getElementById(this.obj.id);
+		var menu = document.getElementById(this.obj.id)
 		this.elem.innerHTML = arguments[i].label;
 		this.elem.className = arguments[i].class;
 		this.elem.setAttribute("name", arguments[i].name);
-		menu.appendChild(this.elem);
 		arguments[i].elem = this.elem;
 		this.array.push(arguments[i]);
-	}
+		Menu.prototype.render.call(this, arguments);
+	};
 };
 
 MenuItem.prototype.show = function(element){
 	this.element = element;
-	for(var j = 0; j < this.array.length; j++){
-		if (this.element.elem == this.array[j].elem) {
-			this.array[j].elem.hidden = true;
+	for(var i = 0; i < this.array.length; i++){
+		if (this.element.elem == this.array[i].elem) {
+			this.array[i].elem.style = "visibility: hidden";
 		};
 	};
 };
 
 MenuItem.prototype.delete = function(element){
 	this.element = element;
-	for(var j = 0; j < this.array.length; j++){
-		if (this.element.elem == this.array[j].elem) {
-			this.array[j].elem.remove();
-			this.array.splice(j, 1);
+	console.log(this.array);
+	for(var i = 0; i < this.array.length; i++){
+		if (this.element.elem == this.array[i].elem) {
+			this.array.splice(i, 1);
+			Menu.prototype.render.call(this, arguments);
 		};
 	};
 };
@@ -57,10 +65,13 @@ MenuItem.prototype.delete = function(element){
 MenuItem.prototype.move = function(element, number){
 	this.element = element;
 	this.number = number;
+	var index = this.array.indexOf(this.element);
+	console.log(index);
 	for(var i = 0; i < this.array.length; i++){
 		if(this.number == i){
-			console.log(this.array[i].elem);
-			this.array[i].elem.before(this.element.elem);
+			this.array.splice(this.number, 0, this.element);
+			this.array.splice(index+1, 1);
+			Menu.prototype.render.call(this, arguments);
 		}
 	}
 };
@@ -153,8 +164,8 @@ Menu.prototype.delete = function(){
 	};
 };
 
-Menu.prototype.move = function(){
-	arguments.move.call(this, arguments);
+Menu.prototype.move = function(element, number){
+	element.move.call(this, element, number)
 };
 
 var menu = new Menu({
@@ -162,15 +173,7 @@ var menu = new Menu({
 	id: 1
 });
 
-var menu2 = new Menu({
-	class: "menu",
-	id: 2
-});
-
 menu.add(button4, button3, button2, input4, input5, input6, select2);
-menu.show(button2);
-menu.delete(button4);
-
-menu2.add(select2, input6, input5, input4, button2, button3, button4);
-menu.show(input6);
-menu.delete(select2);
+menu.show(button4);
+menu.delete(button3);
+menu.move(input4, 1);
