@@ -1,149 +1,225 @@
 function Menu(obj){
 	this.obj = obj;
-	this.menu = document.createElement("div");
+	this.menu = document.createElement("form");
 	this.menu.id = obj.id;
 	this.menu.className = obj.class;
+	this.menu.name = obj.name;
+	this.menu.method = "POST";
 	document.body.appendChild(this.menu);
 	this.array = [];
 };
+
+Menu.prototype.send = function(){
+	var menu = document.getElementById(this.obj.id);
+	var childs = menu.childNodes;
+	menu.addEventListener('click', function(button){
+		var send = button.target;
+		if(send.id == "send"){
+			var dataArray = [];	
+			for(var i = 0; i < childs.length; i++){
+				if(childs[i].tagName == "INPUT" && childs[i].type == "checkbox"){
+					dataArray.push(childs[i].name + ": " + childs[i].checked);
+				} else if(childs[i].tagName == "INPUT"){
+					dataArray.push(childs[i].name + ": " + childs[i].value);
+				} else if(childs[i].tagName == "SELECT"){
+					dataArray.push(childs[i].name + ": " + childs[i].value);
+				}
+			}
+			var data = JSON.stringify(dataArray); 
+			var xhr = new XMLHttpRequest();
+			xhr.open('GET', 'http://example.com', true);
+			
+			xhr.onreadystatechange = function () {
+				if (this.readyState != 4) return;
+				if(xhr.status != 200) {
+					alert(xhr.status);
+				} else {
+					alert("Запрос получен " + xhr.responseURL);
+					for(var i = 0; i < childs.length; i++){
+						if(childs[i].tagName == "INPUT" && childs[i].type == "checkbox"){
+							childs[i].checked = false;
+						} else if(childs[i].tagName == "INPUT"){
+							childs[i].value = "";
+						} else if(childs[i].tagName == "SELECT"){
+							var first = childs[i].firstChild;
+							console.log(first);
+							first.selected = true;
+						}
+					}
+				}
+			}
+			xhr.send(data);
+		}
+	});
+}
 
 Menu.prototype.render = function(){
 	var menu = document.getElementById(this.obj.id);
 	menu.innerHTML = "";
 	for(var i = 0; i < this.array.length; i++){
+		if(this.array[i].options){
+			for(var j = 0; j < this.array[i].options.length; j++){
+				this.option = document.createElement('option');
+				this.option.innerHTML = this.array[i].options[j];
+				this.array[i].elem.appendChild(this.option);
+			}
+		}
 		menu.appendChild(this.array[i].elem);
 	};
 };
 
-function MenuItem(obj){
+function FormItem(obj){
 	this.obj = obj;
 	this.name = obj.name;
 	this.label = obj.label;
 	this.class = obj.class;
-	this.num = obj.num;
+	this.id = obj.id;
+	this.text = obj.text;
+	this.value = obj.value;
+	this.type = obj.type;
+	this.options = obj.options;
 };
 
-MenuItem.prototype.add = function(){
+FormItem.prototype.add = function(){
 	for(var i = 0; i < arguments.length; i++){
 		if(arguments[i] instanceof Button){
 			this.elem = document.createElement('button');
+			this.elem.type = arguments[i].type;
 		} else if(arguments[i] instanceof Select){
 			this.elem = document.createElement('select');
 		} else if(arguments[i] instanceof Input){
 			this.elem = document.createElement('input');
-		};
-		var menu = document.getElementById(this.obj.id)
-		this.elem.innerHTML = arguments[i].label;
-		this.elem.className = arguments[i].class;
+		} else if(arguments[i] instanceof Checkbox){
+			this.elem = document.createElement('input');
+			this.elem.type = "checkbox";
+		}
+		this.elem.id = arguments[i].id || "";
+		this.elem.value = arguments[i].value || "";
+		this.elem.innerHTML = arguments[i].text || "";
+		this.elem.className = arguments[i].class || "";
 		this.elem.setAttribute("name", arguments[i].name);
+		this.elem.setAttribute("label", arguments[i].label);
 		arguments[i].elem = this.elem;
 		this.array.push(arguments[i]);
-		Menu.prototype.render.call(this, arguments);
-	};
+	};	
 };
 
-MenuItem.prototype.show = function(element){
+FormItem.prototype.show = function(element){
 	this.element = element;
 	for(var i = 0; i < this.array.length; i++){
 		if (this.element.elem == this.array[i].elem) {
-			this.array[i].elem.style = "visibility: hidden";
+			this.array[i].elem.style = "display: none";
 		};
 	};
 };
 
-MenuItem.prototype.delete = function(element){
+FormItem.prototype.delete = function(element){
 	this.element = element;
-	console.log(this.array);
 	for(var i = 0; i < this.array.length; i++){
 		if (this.element.elem == this.array[i].elem) {
 			this.array.splice(i, 1);
-			Menu.prototype.render.call(this, arguments);
 		};
 	};
 };
 
-MenuItem.prototype.move = function(element, number){
+FormItem.prototype.move = function(element, number){
 	this.element = element;
 	this.number = number;
 	var index = this.array.indexOf(this.element);
-	console.log(index);
 	for(var i = 0; i < this.array.length; i++){
 		if(this.number == i){
 			this.array.splice(this.number, 0, this.element);
 			this.array.splice(index+1, 1);
-			Menu.prototype.render.call(this, arguments);
 		}
 	}
 };
 
 function Button(obj){
-	MenuItem.apply(this, arguments);
+	FormItem.apply(this, arguments);
 };
 
-Button.prototype = Object.create(MenuItem.prototype);
+Button.prototype = Object.create(FormItem.prototype);
 Button.prototype.constructor = Button;
 
 function Select(obj){
-	MenuItem.apply(this, arguments);
+	FormItem.apply(this, arguments);
 };
 
-Select.prototype = Object.create(MenuItem.prototype);
+Select.prototype = Object.create(FormItem.prototype);
 Select.prototype.constructor = Select;
 
 function Input(obj){
-	MenuItem.apply(this, arguments);
+	FormItem.apply(this, arguments);
 };
 
-Input.prototype = Object.create(MenuItem.prototype);
+Input.prototype = Object.create(FormItem.prototype);
 Input.prototype.constructor = Input;
+
+function Checkbox(obj){
+	FormItem.apply(this, arguments);
+};
+
+Checkbox.prototype = Object.create(FormItem.prototype);
+Checkbox.prototype.constructor = Checkbox;
 
 var select2 = new Select({
 	label: "Click me1",
 	class: "select",
 	name: "select2",
-	num: 0
+	id: "select2",
+	options: ["aaaaaa", "bbbbbb", "ccccccc"]
+});
+
+var select3 = new Select({
+	label: "Click me1",
+	class: "select",
+	name: "select3",
+	id: "select3",
+	options: ["aaaaa3", "bbbbb3", "cccccc3"]
 });
 
 var button3 = new Button({
 	label: "Click me 3",
     name: "button3",
     class: "button",
-    num: 0
-});
-
-var button2 = new Button({
-	label: "Click me 2",
-    name: "button2",
-    class: "button",
-    num: 0
+    id: "button3",
+    text: "button3",
+    value: "adasdw"
 });
 
 var input4 = new Input({
 	label: "Click me4",
     name: "input4",
     class: "input",
-    num: 0
+    id: "input4",
+    text: "input4",
+    value: "adasdw"
 });
 
-var input5 = new Input({
-	label: "Click me5",
-    name: "input5",
-    class: "input",
-    num: 0
+var checkbox1 = new Checkbox({
+	label: "Click me4",
+    name: "checkbox1",
+    class: "checkbox",
+    text: "input4",
+    value: "adasdw"
 });
 
-var input6 = new Input({
-	label: "Click me6",
-    name: "input6",
-    class: "input",
-    num: 0
+var reset = new Button({
+	label: "reset",
+    name: "reset",
+    class: "button",
+    id: "reset",
+    text: "Reset",
+    type: "reset"
 });
 
-var button4 = new Button({
-	class: "button",
-	name: "button4",
-	label: "Click me 4",
-	num: 0
+var send = new Button({
+	label: "send",
+    name: "send",
+    class: "button",
+    id: "send",
+    text: "Send",
+    type: "button"
 });
 
 Menu.prototype.add = function(){
@@ -170,10 +246,10 @@ Menu.prototype.move = function(element, number){
 
 var menu = new Menu({
 	class: "menu",
-	id: 1
+	id: 1,
+	name: "form1"
 });
 
-menu.add(button4, button3, button2, input4, input5, input6, select2);
-menu.show(button4);
-menu.delete(button3);
-menu.move(input4, 1);
+menu.add(send, reset, input4, select2, checkbox1, select3);
+menu.send();
+menu.render();
