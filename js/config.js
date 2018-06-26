@@ -10,48 +10,45 @@ function Menu(obj){
 };
 
 Menu.prototype.send = function(){
-	var menu = document.getElementById(this.obj.id);
-	var childs = menu.childNodes;
-	menu.addEventListener('click', function(button){
-		var send = button.target;
-		if(send.id == "send"){
-			var dataArray = [];	
-			for(var i = 0; i < childs.length; i++){
-				if(childs[i].tagName == "INPUT" && childs[i].type == "checkbox"){
-					dataArray.push(childs[i].name + ": " + childs[i].checked);
-				} else if(childs[i].tagName == "INPUT"){
-					dataArray.push(childs[i].name + ": " + childs[i].value);
-				} else if(childs[i].tagName == "SELECT"){
-					dataArray.push(childs[i].name + ": " + childs[i].value);
-				}
+	var arrayDOM = this.array;
+	this.send = document.getElementById("send");
+	this.send.onclick = function(){
+		var dataArray = [];
+		for(var i = 0; i < arrayDOM.length; i++){
+			if(arrayDOM[i].elem.tagName == "INPUT" && arrayDOM[i].elem.type == "checkbox"){
+				dataArray.push(arrayDOM[i].name + ": " + arrayDOM[i].elem.checked);
+			} else if(arrayDOM[i].elem.tagName == "INPUT"){
+				dataArray.push(arrayDOM[i].name + ": " + arrayDOM[i].elem.value);
+			} else if(arrayDOM[i].elem.tagName == "SELECT"){
+
+				dataArray.push(arrayDOM[i].name + ": " + arrayDOM[i].elem.value);
 			}
-			var data = JSON.stringify(dataArray); 
-			var xhr = new XMLHttpRequest();
-			xhr.open('GET', 'http://example.com', true);
-			
-			xhr.onreadystatechange = function () {
-				if (this.readyState != 4) return;
-				if(xhr.status != 200) {
-					alert(xhr.status);
-				} else {
-					alert("Запрос получен " + xhr.responseURL);
-					for(var i = 0; i < childs.length; i++){
-						if(childs[i].tagName == "INPUT" && childs[i].type == "checkbox"){
-							childs[i].checked = false;
-						} else if(childs[i].tagName == "INPUT"){
-							childs[i].value = "";
-						} else if(childs[i].tagName == "SELECT"){
-							var first = childs[i].firstChild;
-							console.log(first);
-							first.selected = true;
-						}
+		}
+		var data = JSON.stringify(dataArray); 
+		var xhr = new XMLHttpRequest();
+		xhr.open('GET', 'http://example.com', true);
+		xhr.onreadystatechange = function () {
+			if (this.readyState != 4) return;
+			if(xhr.status != 200) {
+				alert(xhr.status);
+			} else {
+				alert("Запрос получен " + xhr.responseURL);
+				for(var i = 0; i < arrayDOM.length; i++){
+					if(arrayDOM[i].elem.tagName == "INPUT" && arrayDOM[i].elem.type == "checkbox"){
+						arrayDOM[i].elem.checked = false;
+					} else if(arrayDOM[i].elem.tagName == "INPUT"){
+						arrayDOM[i].elem.value = "";
+					} else if(arrayDOM[i].elem.tagName == "SELECT"){
+						var first = arrayDOM[i].elem.firstChild;
+						first.selected = true;
 					}
 				}
 			}
-			xhr.send(data);
 		}
-	});
-}
+		xhr.send(data);
+
+	};
+		}
 
 Menu.prototype.render = function(){
 	var menu = document.getElementById(this.obj.id);
@@ -78,6 +75,7 @@ function FormItem(obj){
 	this.value = obj.value;
 	this.type = obj.type;
 	this.options = obj.options;
+	this.function = obj.function;
 };
 
 FormItem.prototype.add = function(){
@@ -99,6 +97,7 @@ FormItem.prototype.add = function(){
 		this.elem.className = arguments[i].class || "";
 		this.elem.setAttribute("name", arguments[i].name);
 		this.elem.setAttribute("label", arguments[i].label);
+		this.elem.setAttribute("onclick", arguments[i].function) || "";
 		arguments[i].elem = this.elem;
 		this.array.push(arguments[i]);
 	};	
@@ -129,7 +128,7 @@ FormItem.prototype.move = function(element, number){
 	for(var i = 0; i < this.array.length; i++){
 		if(this.number == i){
 			this.array.splice(this.number, 0, this.element);
-			this.array.splice(index+1, 1);
+			this.array.splice(index, 1);
 		}
 	}
 };
@@ -219,7 +218,7 @@ var send = new Button({
     class: "button",
     id: "send",
     text: "Send",
-    type: "button"
+    type: "button",
 });
 
 Menu.prototype.add = function(){
@@ -251,5 +250,5 @@ var menu = new Menu({
 });
 
 menu.add(send, reset, input4, select2, checkbox1, select3);
-menu.send();
 menu.render();
+menu.send();
