@@ -41,19 +41,6 @@ Menu.prototype.send = function(){
 	})	
 };
 
-Menu.prototype.reset = function(){
-	for(var i = 0; i < this.array.length; i++){
-		if(this.array[i].elem.tagName == "INPUT" && this.array[i].elem.type == "checkbox"){
-			this.array[i].elem.checked = false;
-		} else if(this.array[i].elem.tagName == "INPUT"){
-			this.array[i].elem.value = "";
-		} else if(this.array[i].elem.tagName == "SELECT"){
-			var first = this.array[i].elem.firstChild;
-			first.selected = true;
-		}
-	}
-}
-
 Menu.prototype.render = function(){
 	var menu = document.getElementById(this.object.id);
 	menu.innerHTML = "";
