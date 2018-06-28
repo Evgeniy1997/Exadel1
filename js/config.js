@@ -1,57 +1,61 @@
-function Menu(obj){
-	this.obj = obj;
+function Menu(object){
+	this.object = object;
 	this.menu = document.createElement("form");
-	this.menu.id = obj.id;
-	this.menu.className = obj.class;
-	this.menu.name = obj.name;
+	this.menu.id = object.id;
+	this.menu.className = object.class;
+	this.menu.name = object.name;
 	this.menu.method = "POST";
 	document.body.appendChild(this.menu);
 	this.array = [];
 };
 
 Menu.prototype.send = function(){
+	var menu = document.getElementById(this.object.id);
 	var arrayDOM = this.array;
-	this.send = document.getElementById("send");
-	this.send.onclick = function(){
-		var dataArray = [];
-		for(var i = 0; i < arrayDOM.length; i++){
-			if(arrayDOM[i].elem.tagName == "INPUT" && arrayDOM[i].elem.type == "checkbox"){
-				dataArray.push(arrayDOM[i].name + ": " + arrayDOM[i].elem.checked);
-			} else if(arrayDOM[i].elem.tagName == "INPUT"){
-				dataArray.push(arrayDOM[i].name + ": " + arrayDOM[i].elem.value);
-			} else if(arrayDOM[i].elem.tagName == "SELECT"){
-
-				dataArray.push(arrayDOM[i].name + ": " + arrayDOM[i].elem.value);
-			}
-		}
-		var data = JSON.stringify(dataArray); 
-		var xhr = new XMLHttpRequest();
-		xhr.open('GET', 'http://example.com', true);
-		xhr.onreadystatechange = function () {
-			if (this.readyState != 4) return;
-			if(xhr.status != 200) {
-				alert(xhr.status);
-			} else {
-				alert("Запрос получен " + xhr.responseURL);
-				for(var i = 0; i < arrayDOM.length; i++){
-					if(arrayDOM[i].elem.tagName == "INPUT" && arrayDOM[i].elem.type == "checkbox"){
-						arrayDOM[i].elem.checked = false;
-					} else if(arrayDOM[i].elem.tagName == "INPUT"){
-						arrayDOM[i].elem.value = "";
-					} else if(arrayDOM[i].elem.tagName == "SELECT"){
-						var first = arrayDOM[i].elem.firstChild;
-						first.selected = true;
-					}
+	menu.addEventListener("click", function(button){
+		var a = button.target;
+		if (a.id == "send") {
+			var dataArray = [];
+			for(var i = 0; i < arrayDOM.length; i++){
+				if(arrayDOM[i].elem.tagName != "BUTTON"){
+					dataArray.push(arrayDOM[i].getValue());
+				}
+			};
+			console.log(dataArray);
+			var data = JSON.stringify(dataArray); 
+			var xhr = new XMLHttpRequest();
+			xhr.open('GET', 'http://example.com', true);
+			xhr.onreadystatechange = function () {
+				if (this.readyState != 4) return;
+				if(xhr.status != 200) {
+					alert(xhr.status);
+				} else {
+					alert("Запрос получен " + xhr.responseURL);
+					for(var i = 0; i < arrayDOM.length; i++){
+						arrayDOM[i].resetValue();
+					};
 				}
 			}
+			xhr.send(data);
 		}
-		xhr.send(data);
+	})	
+};
 
-	};
+Menu.prototype.reset = function(){
+	for(var i = 0; i < this.array.length; i++){
+		if(this.array[i].elem.tagName == "INPUT" && this.array[i].elem.type == "checkbox"){
+			this.array[i].elem.checked = false;
+		} else if(this.array[i].elem.tagName == "INPUT"){
+			this.array[i].elem.value = "";
+		} else if(this.array[i].elem.tagName == "SELECT"){
+			var first = this.array[i].elem.firstChild;
+			first.selected = true;
 		}
+	}
+}
 
 Menu.prototype.render = function(){
-	var menu = document.getElementById(this.obj.id);
+	var menu = document.getElementById(this.object.id);
 	menu.innerHTML = "";
 	for(var i = 0; i < this.array.length; i++){
 		if(this.array[i].options){
@@ -78,8 +82,13 @@ function FormItem(obj){
 	this.function = obj.function;
 };
 
-FormItem.prototype.add = function(){
+FormItem.prototype.add = function(elem){
 	for(var i = 0; i < arguments.length; i++){
+		this.menu = document.getElementById(this.object.id);
+		this.clone = {};
+		for(var key in arguments[i]){
+			this.clone[key] = arguments[i][key];
+		}
 		if(arguments[i] instanceof Button){
 			this.elem = document.createElement('button');
 			this.elem.type = arguments[i].type;
@@ -97,13 +106,32 @@ FormItem.prototype.add = function(){
 		this.elem.className = arguments[i].class || "";
 		this.elem.setAttribute("name", arguments[i].name);
 		this.elem.setAttribute("label", arguments[i].label);
-		this.elem.setAttribute("onclick", arguments[i].function) || "";
-		arguments[i].elem = this.elem;
-		this.array.push(arguments[i]);
-	};	
+		this.clone.form = this.menu;
+		var form = this.menu;
+		this.clone.getParent = function(){
+			return form;
+		};
+		this.clone.elem = this.elem;
+		var value = this.clone.elem;
+		var name = this.clone.elem.name;
+		this.clone.getValue = function(){
+			if(value.tagName == "INPUT" && value.type == "checkbox"){
+				return name + ": " + value.checked;
+			} else if(value.tagName == "INPUT"){
+				return name + ": " + value.value;
+			} else if(value.tagName == "SELECT"){
+				return name + ": " + value.value;
+			}
+		};
+		this.clone.resetValue = function(){
+			return value.value = "";
+		};
+		this.array.push(this.clone);
+	};
 };
 
 FormItem.prototype.show = function(element){
+	console.log(this.array);
 	this.element = element;
 	for(var i = 0; i < this.array.length; i++){
 		if (this.element.elem == this.array[i].elem) {
@@ -161,12 +189,22 @@ function Checkbox(obj){
 Checkbox.prototype = Object.create(FormItem.prototype);
 Checkbox.prototype.constructor = Checkbox;
 
+var send = new Button({
+	label: "send",
+    name: "send",
+    class: "button",
+    id: "send",
+    value: "sadca",
+    text: "Send",
+    type: "button"
+});
+
 var select2 = new Select({
 	label: "Click me1",
 	class: "select",
 	name: "select2",
 	id: "select2",
-	options: ["aaaaaa", "bbbbbb", "ccccccc"]
+	options: ["aaaa", "bbbb", "cccc"]
 });
 
 var select3 = new Select({
@@ -174,7 +212,7 @@ var select3 = new Select({
 	class: "select",
 	name: "select3",
 	id: "select3",
-	options: ["aaaaa3", "bbbbb3", "cccccc3"]
+	options: ["1111", "2222", "3333"]
 });
 
 var button3 = new Button({
@@ -199,8 +237,18 @@ var checkbox1 = new Checkbox({
 	label: "Click me4",
     name: "checkbox1",
     class: "checkbox",
-    text: "input4",
-    value: "adasdw"
+});
+
+var checkbox2 = new Checkbox({
+	label: "Click me4",
+    name: "checkbox2",
+    class: "checkbox",
+});
+
+var checkbox3 = new Checkbox({
+	label: "Click me4",
+    name: "checkbox2",
+    class: "checkbox",
 });
 
 var reset = new Button({
@@ -210,15 +258,6 @@ var reset = new Button({
     id: "reset",
     text: "Reset",
     type: "reset"
-});
-
-var send = new Button({
-	label: "send",
-    name: "send",
-    class: "button",
-    id: "send",
-    text: "Send",
-    type: "button",
 });
 
 Menu.prototype.add = function(){
@@ -245,10 +284,20 @@ Menu.prototype.move = function(element, number){
 
 var menu = new Menu({
 	class: "menu",
-	id: 1,
+	id: 333,
 	name: "form1"
 });
 
-menu.add(send, reset, input4, select2, checkbox1, select3);
+var menu2 = new Menu({
+	class: "menu13",
+	id: 444,
+	name: "form2"
+});
+
+menu.add(send, reset, input4, select2, checkbox1, select3, checkbox2);
 menu.render();
 menu.send();
+
+menu2.add(send, reset, input4);
+menu2.render();
+menu2.send();
